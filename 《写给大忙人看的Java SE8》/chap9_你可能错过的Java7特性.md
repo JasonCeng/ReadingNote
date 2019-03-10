@@ -1,7 +1,7 @@
 # 9.1 异常处理改进
 
 ## 目录
-* <a href="#1-try-with-resource语句">1 try-with-resource语句</a>
+* <a href="#1try-with-resource语句">1 try-with-resource语句</a>
 
 
 
