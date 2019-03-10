@@ -1,11 +1,13 @@
 # 9.1 异常处理改进
 
 ## 目录
-* <a href="#1try-with-resource语句">1 try-with-resource语句</a>
+* <a href="#1try-with-resource语句">1.try-with-resource语句</a>
+* <a href="#2忽略异常">2.忽略异常</a>
+* <a href="#3捕获多个异常">3.捕获多个异常</a>
+* <a href="#4更简单地处理反射方法的异常">4.更简单地处理反射方法的异常</a>
 
 
-
-### 1.try-with-resource语句
+## 1.try-with-resource语句
 * **一般格式：**
 ```java
 打开一个资源
@@ -30,7 +32,7 @@ try(Resource res = ...){
 
  **注意：**try-with-resource语句自己也可以含有catch和finally分支。他们都会在关闭资源之后执行。在实践中，不建议单个try语句放置太多逻辑代码。
 
-### 2.忽略异常
+## 2.忽略异常
 * **假设一种情况：**当产生了一个IOException，接下来在关闭资源时，close方法又抛出了另一个异常。这个时候Java会如何处理呢？
 
 * **Java 7以前的处理方法（不妥）：**在finally分支中抛出的异常会丢弃掉之前的异常。这不仅听上去很不合理，实际上也确实不合理。毕竟，用户对原始的异常会更感兴趣。
@@ -53,7 +55,7 @@ try{
 
   2)当禁用堆栈跟踪时，调用fillInStackTrace不会有效果，并且getStackTrace方法会返回一个长度为0的数组。着可以用于因内存不够而产生的VM错误，然后抛出一个与之前所忽略异常无关且完全不同的异常。
 
-### 3.捕获多个异常
+## 3.捕获多个异常
 在Java SE 7中，你可以在同一个catch分支中捕获多个异常类型。
 
 例如，假设处理丢失的文件和未知主机的行为一致，那么你可以将这里两个异常写在一个catch分支中：
@@ -73,3 +75,25 @@ try{
 1）代码更简洁。
 
 2）执行效率更高。因为生产的字节码会包含一个含有共享catch分支的代码块。
+
+## 4.更简单地处理反射方法的异常
+在Java SE7之前，当你调用一个反射方法时，你不得不捕获许多不相关的检查器异常。
+
+例如：假设你创建一个类并调用它的main方法：
+```java
+Class.forName(className).getMethod("main").invoke(null, new String[] {});
+```
+该语句可能会导致一个ClassNotFoundException、NoSuchMethodException、IllegalAccessException或者InvocationTargetException。
+
+当然，你可以像[3.捕获多个异常](#3捕获多个异常)中所介绍的特性，将这些异常组合到一个分支语句中：
+```java
+cach(ClassNoteFoundException | NoSuchMethodException |  IllegalAccessException | InvocationTargetException ex) {
+  ...
+}
+```
+但是，即时这样，代码还是很多。Java 7为相关异常提供了一个公共父类ReflectiveOperationException，这样就可以通过这个异常来捕获其他所有子异常：
+```java
+catch(ReflectiveOperationException ex){
+  ...
+}
+```
